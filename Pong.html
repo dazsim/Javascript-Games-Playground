@@ -1,0 +1,161 @@
+<!doctype html>
+<html>
+<head>
+	<title>Pong</title>
+	<meta charset="utf-8" />
+	<style>
+		canvas { background: #DDD; display: block; margin 0 auto; }
+	</style>
+</head>
+<body>
+<canvas id="myCanvas" width="640" height="480"></canvas>
+<script src="blocks.js"></script>
+<script>
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext("2d");
+	/*BALL VARIABLES*/
+	var ballRadius = 10;
+	var x = canvas.width/2;
+	var y = canvas.height-30;
+	var dx = 2;
+	var dy = -2;
+	/*BAT VARIABLES*/
+	var batX = 300;
+	var batY = canvas.height-30;
+	var batWidth = 60;
+	var batHeight = 20;
+
+	var score = 0;
+
+	/*KEYS*/
+	var leftPressed = false;
+	var rightPressed = false;
+
+	/*SCREEN STATE ENGINE*/
+	var screenState = "home";
+	var level = 0;
+	function drawScore()
+	{
+		ctx.font = "16px Arial";
+		ctx.fillStyle = "#0095DD";
+		ctx.fillText("Score: "+score, 8, 20);
+	}
+
+	function drawBall() {
+		ctx.beginPath();
+		ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+		ctx.fillStyle = "#5050DD";
+		ctx.fill();
+		ctx.closePath();
+	}
+
+	function drawBat() {
+		ctx.beginPath();
+		ctx.arc(batX+(batHeight/2),batY+(batHeight/2),(batHeight/2),0,Math.PI*2);
+		ctx.fillStyle="#700070";
+		ctx.fill();
+		ctx.closePath();
+
+		ctx.beginPath();
+		ctx.arc(batX+batWidth-(batHeight/2),batY+(batHeight/2),(batHeight/2),0,Math.PI*3);
+		ctx.fillStyle="#700070";
+		ctx.fill();
+		ctx.closePath();
+
+		ctx.beginPath();
+		ctx.rect(batX+(batHeight/2),batY,batWidth-batHeight,batHeight);
+		ctx.fillStyle="#4040CC";
+		ctx.fill();
+		ctx.closePath();
+	}
+
+
+
+	function draw() {
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		drawBricks(ctx);
+		drawBall();
+		drawBat();
+		drawScore();
+		collisionDetection(x,y);
+		//side wall check
+		if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) {
+			dx = -dx;
+		}
+		//top wall check
+		if(y + dy < ballRadius) {
+			dy = -dy;
+		} else if (y+dy>canvas.height-ballRadius){
+			if (x>batX && x<batX + batWidth){
+				dy=-dy;
+			} else {
+				alert("GAME OVER");
+				document.location.reload();
+			}
+
+		}
+		if ((y+dy>canvas.height-30) && (x>batX && x<batX + batWidth))
+		{
+			dy=-dy;
+		}
+		if (rightPressed && (batX < canvas.width-batWidth)) {
+			batX +=7;
+		}
+		else if (leftPressed && (batX > 6)) {
+			batX -=7;
+		}
+		x += dx;
+		y += dy;
+	}
+	document.addEventListener("keydown",keyDownHandler,false);
+	document.addEventListener("keyup",keyUpHandler,false);
+	function keyDownHandler(e) {
+		if (e.keyCode == 39)
+		{
+			rightPressed = true;
+		}
+		else if (e.keyCode == 37) {
+			leftPressed = true;
+		}
+	}
+	function keyUpHandler(e) {
+		if (e.keyCode == 39)
+		{
+			rightPressed = false;
+		}
+		else if (e.keyCode == 37) {
+			leftPressed = false;
+		}
+	}
+
+	/*****************************************************************
+
+	We are going to change the game so that the non-drawing functions are
+	moved into the mainLoop function and restructure the game so that it has
+	a basic state engine for game screens.  each "state" will be handled by a
+	different function.
+
+	******************************************************************/
+
+	function mainLoop()
+	{
+		if (screenState=="home")
+		{
+			//this is our main menu
+		} else if (screenState=="New")
+		{
+			//initialise new game
+		} else if (screenState=="Load")
+		{
+			//loads the game level
+		} else if (screenState=="Play")
+		{
+			//this is our original first level.
+		}
+
+	}
+
+	setInterval(draw, 10);
+</script>
+</body>
+</html>
