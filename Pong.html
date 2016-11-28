@@ -30,15 +30,69 @@
 	/*KEYS*/
 	var leftPressed = false;
 	var rightPressed = false;
+	var enterPressed = false;
 
 	/*SCREEN STATE ENGINE*/
 	var screenState = "home";
 	var level = 0;
+	var pageTimer = 40; //this variable is used for ease-in and page timing.
+	var lives = 3;
+	var leftClick = false;
 	function drawScore()
 	{
 		ctx.font = "16px Arial";
+		ctx.fillStyle = "#FF0000";
+		var txtLives = "Lives: ";
+		for (var n=lives;n--;n==0)
+		{
+			txtLives += " <3 ";
+		}
+		ctx.fillText("Score: "+score*10+" "+txtLives, 8, 20);
+		//ctx.fillText("Remaining: "+lastCount, 8, 40);
+	}
+	function drawMainMenu()
+	{
+		clearScreen();
+		ctx.font = "32px Arial";
 		ctx.fillStyle = "#0095DD";
-		ctx.fillText("Score: "+score, 8, 20);
+		ctx.fillText("Press Enter to Begin", 150, canvas.height/2);
+	}
+	var fontcol = 150;
+	function drawGameover()
+	{
+		clearScreen();
+		ctx.font = "32px Arial";
+		//ctx.fillStyle = "#0095DD";
+		fontcol += Math.floor(Math.random()*18)-9;
+		if (fontcol>255)
+		{
+			fontcol=255;
+		}
+		if (fontcol<150)
+		{
+			fontcol=150;
+		}
+		ctx.fillStyle = "rgba("+fontcol+",20,20,1.0)";
+		ctx.fillText("Game Over : "+score, 130+Math.floor(fontcol/4), canvas.height/2);
+	}
+
+	function drawWinner()
+	{
+		clearScreen();
+		ctx.font = "32px Arial";
+		//ctx.fillStyle = "#0095DD";
+		fontcol += Math.floor(Math.random()*18)-9;
+		if (fontcol>255)
+		{
+			fontcol=255;
+		}
+		if (fontcol<150)
+		{
+			fontcol=150;
+		}
+		ctx.fillStyle = "rgba(20,"+fontcol+",20,1.0)";
+
+		ctx.fillText("You are a WINNER! : "+score, 150, canvas.height/2);
 	}
 
 	function drawBall() {
@@ -50,34 +104,86 @@
 	}
 
 	function drawBat() {
+		//left bat side highlight
 		ctx.beginPath();
 		ctx.arc(batX+(batHeight/2),batY+(batHeight/2),(batHeight/2),0,Math.PI*2);
-		ctx.fillStyle="#700070";
+		ctx.fillStyle="#202080";
+		ctx.fill();
+		ctx.closePath();
+		//inner left shadow
+		ctx.beginPath();
+		ctx.arc(batX+(batHeight/2),batY+(batHeight/2),(batHeight/2)-1,0,Math.PI*2);
+		ctx.fillStyle="#6060EE";
 		ctx.fill();
 		ctx.closePath();
 
 		ctx.beginPath();
-		ctx.arc(batX+batWidth-(batHeight/2),batY+(batHeight/2),(batHeight/2),0,Math.PI*3);
-		ctx.fillStyle="#700070";
+		ctx.arc(batX+(batHeight/2),batY+(batHeight/2),(batHeight/2)-2,0,Math.PI*2);
+		ctx.fillStyle="#4040CC";
 		ctx.fill();
 		ctx.closePath();
 
+
+		//right bat side
+		ctx.beginPath();
+		ctx.arc(batX+batWidth-(batHeight/2),batY+(batHeight/2),(batHeight/2),0,Math.PI*3);
+		ctx.fillStyle="#202080";
+		ctx.fill();
+		ctx.closePath();
+
+		ctx.beginPath();
+		ctx.arc(batX+batWidth-(batHeight/2),batY+(batHeight/2),(batHeight/2)-1,0,Math.PI*3);
+		ctx.fillStyle="#6060EE";
+		ctx.fill();
+		ctx.closePath();
+
+		ctx.beginPath();
+		ctx.arc(batX+batWidth-(batHeight/2),batY+(batHeight/2),(batHeight/2)-2,0,Math.PI*3);
+		ctx.fillStyle="#4040CC";
+		ctx.fill();
+		ctx.closePath();
+
+
+		//bat body
 		ctx.beginPath();
 		ctx.rect(batX+(batHeight/2),batY,batWidth-batHeight,batHeight);
 		ctx.fillStyle="#4040CC";
 		ctx.fill();
 		ctx.closePath();
+		//bat detail
+		ctx.beginPath();
+		ctx.fillStyle="#202080";
+		ctx.moveTo(batX+(batHeight/2),batY);
+		ctx.lineTo(batX+(batHeight/2)+12,batY+12);
+		ctx.lineTo(batX+batWidth-(batHeight/2)-12,batY+12);
+		ctx.lineTo(batX+batWidth-(batHeight/2),batY);
+		ctx.fill();
+		ctx.closePath();
+
+		ctx.beginPath();
+		ctx.fillStyle="#6060EE";
+		ctx.moveTo(batX+(batHeight/2)+1,batY);
+		ctx.lineTo(batX+(batHeight/2)+11,batY+11);
+		ctx.lineTo(batX+batWidth-1-(batHeight/2)-11,batY+11);
+		ctx.lineTo(batX+batWidth-1-(batHeight/2),batY);
+		ctx.fill();
+		ctx.closePath();
+
+		ctx.beginPath();
+		ctx.fillStyle="#4040CC";
+		ctx.moveTo(batX+(batHeight/2)+2,batY);
+		ctx.lineTo(batX+(batHeight/2)+10,batY+10);
+		ctx.lineTo(batX+batWidth-2-(batHeight/2)-10,batY+10);
+		ctx.lineTo(batX+batWidth-2-(batHeight/2),batY);
+		ctx.fill();
+		ctx.closePath();
+
+
+
 	}
 
-
-
-	function draw() {
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		drawBricks(ctx);
-		drawBall();
-		drawBat();
-		drawScore();
-		collisionDetection(x,y);
+	function worldCollision()
+	{
 		//side wall check
 		if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) {
 			dx = -dx;
@@ -89,8 +195,20 @@
 			if (x>batX && x<batX + batWidth){
 				dy=-dy;
 			} else {
-				alert("GAME OVER");
-				document.location.reload();
+				//alert("GAME OVER");
+				if (lives> 0)
+				{
+					lives--;
+					x = canvas.width/2;
+					y = canvas.height-30;
+					dx = 2;
+					dy = -2;
+				} else {
+					screenState = "Gameover";
+					pageTimer = 5000;
+
+				}
+
 			}
 
 		}
@@ -107,8 +225,40 @@
 		x += dx;
 		y += dy;
 	}
+
+	function clearScreen()
+	{
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+	}
+	function drawGame() {
+		clearScreen();
+		drawScore();
+		drawBricks(ctx,level);
+		drawBall();
+		drawBat();
+
+		collisionDetection(x,y,level);
+		if (lastCount==0) //have we destroyed all bricks?
+		{
+			if (level<(bricks.levels.length-1))
+			{
+				level++;
+				x = canvas.width/2;
+				y = canvas.height-30;
+				dx = 2;
+				dy = -2;
+				//loadLevels();
+			} else {
+				screenState = "Winner";
+			}
+		}
+
+		worldCollision();
+	}
 	document.addEventListener("keydown",keyDownHandler,false);
 	document.addEventListener("keyup",keyUpHandler,false);
+	document.addEventListener("mousemove",mouseMoveHandler,false);
+	document.addEventListener("click",clickHandler,false);
 	function keyDownHandler(e) {
 		if (e.keyCode == 39)
 		{
@@ -116,7 +266,10 @@
 		}
 		else if (e.keyCode == 37) {
 			leftPressed = true;
+		} else if (e.keyCode ==13) {
+			enterPressed = true;
 		}
+
 	}
 	function keyUpHandler(e) {
 		if (e.keyCode == 39)
@@ -125,8 +278,27 @@
 		}
 		else if (e.keyCode == 37) {
 			leftPressed = false;
+		} else if (e.keyCode == 13) {
+			enterPressed = false;
 		}
 	}
+
+	function mouseMoveHandler(e) {
+		var relativeX = e.clientX - canvas.offsetLeft;
+		if (relativeX>0 && relativeX < canvas.width) {
+			batX = relativeX-batWidth/2;
+		}
+	}
+	function clickHandler(e) {
+		leftClick = true;
+	}
+
+	function mouseClicked() {
+		var tmp = leftClick;
+		leftClick = false;
+		return tmp;
+	}
+
 
 	/*****************************************************************
 
@@ -137,25 +309,80 @@
 
 	******************************************************************/
 
+
 	function mainLoop()
 	{
+		console.log(screenState);
 		if (screenState=="home")
 		{
 			//this is our main menu
+			drawMainMenu();
+			if (pageTimer == 1) { mouseClicked();} //reset mouse flag
+			if (pageTimer==0)
+			{
+				//added so that game can be played on phone
+				if (mouseClicked())
+				{
+					screenState = "Load";
+				}
+				if (enterPressed)
+				{
+					screenState = "Load";
+				}
+			} else {
+				pageTimer--;
+			}
 		} else if (screenState=="New")
 		{
 			//initialise new game
 		} else if (screenState=="Load")
 		{
 			//loads the game level
+			level = 0;
+			score = 0;
+			lives = 3;
+			x = canvas.width/2;
+			y = canvas.height-30;
+			dx = 2;
+			dy = -2;
+			loadLevels();
+			screenState = "Play";
 		} else if (screenState=="Play")
 		{
 			//this is our original first level.
+			drawGame();
+		} else if (screenState=="Gameover")
+		{
+			//this is the game over screen
+			drawGameover();
+			pageTimer = 40;
+			if (mouseClicked())
+			{
+				screenState = "home";
+			}
+			if (enterPressed) {
+				screenState = "home";
+			}
+
+		} else if (screenState=="Winner")
+		{
+			//You won you clever jigger!
+			drawWinner();
+			pageTimer = 40;
+			if (mouseClicked())
+			{
+				screenState = "home";
+			}
+			if (enterPressed) {
+				screenState = "home";
+			}
 		}
 
-	}
+		requestAnimationFrame(mainLoop);
 
-	setInterval(draw, 10);
+	}
+	mainLoop();
+	//setInterval(mainLoop, 10);
 </script>
 </body>
 </html>
